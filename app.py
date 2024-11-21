@@ -11,7 +11,7 @@ app = FastAPI()
 
 templates = Jinja2Templates(directory='templates')
 
-def sumarize(text,num_sentence=3):
+def summarize(text,num_sentence=3)->str:
     if not text.strip():
         return "Input is empty"
     if len(text.split()) < 20:
@@ -21,7 +21,7 @@ def sumarize(text,num_sentence=3):
     doc = nlp(text)
     sentences = [sent.text.strip() for sent in doc.sents]
 
-    if len(sentence) == 0:
+    if len(sentences) == 0:
         return ("No valid sentences found? "
                 "do you know english "
                 "or your keyboard is not working fine?")
@@ -36,6 +36,16 @@ def sumarize(text,num_sentence=3):
 
     sentence_score_map = {sentences[i]: sentence_score[i] for i in range(len(sentences))}
     top_sentences = nlargest(num_sentence, sentence_score_map, key=sentence_score_map.get)
-    summary = " ".join(top_sentencs)
+    summary = " ".join(top_sentences)
 
     return summary
+
+#Fastapi section
+@app.get('/', response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse('index.html',{"request":request})
+
+@app.post("/summarize", response_class = HTMLResponse)
+def summaring(request:Request,text:str = Form(...)):
+    summary =  summarize(text)
+    return templates.TemplateResponse("index.html",{"request":request,"summary":summary})
